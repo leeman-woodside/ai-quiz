@@ -35,7 +35,7 @@ pip install -r requirements.txt
     REQUEST_TIMEOUT_SECONDS=30
     EOF
     ```
-  - Or run in mock mode (no key required):
+  - Or run in mock mode (No Key needed but very lame quizes. This was used to test frontend in dev):
     ```bash
     cat > .env <<'EOF'
     PROVIDER=groq
