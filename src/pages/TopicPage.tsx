@@ -1,14 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { Difficulty } from "../types/quiz";
 
 export default function TopicPage() {
   const [topic, setTopic] = useState("");
+  const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const navigate = useNavigate();
 
   function startQuiz() {
     const trimmed = topic.trim();
     if (!trimmed) return;
-    navigate(`/quiz?topic=${encodeURIComponent(trimmed)}`);
+    const params = new URLSearchParams({
+      topic: trimmed,
+      difficulty,
+    });
+    navigate(`/quiz?${params.toString()}`);
   }
 
   return (
@@ -20,7 +26,7 @@ export default function TopicPage() {
           e.preventDefault();
           startQuiz();
         }}
-        style={{ display: "flex", gap: 8 }}
+        style={{ display: "flex", gap: 8, alignItems: "center" }}
       >
         <input
           value={topic}
@@ -29,6 +35,16 @@ export default function TopicPage() {
           style={{ flex: 1, padding: 8 }}
           aria-label="Topic"
         />
+        <select
+          aria-label="Difficulty"
+          value={difficulty}
+          onChange={(e) => setDifficulty(e.target.value as Difficulty)}
+          style={{ padding: 8 }}
+        >
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
         <button
           type="submit"
           disabled={topic.trim().length === 0}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { generateMockQuiz } from "../services/mockQuiz";
-import type { UserAnswer } from "../types/quiz";
+import type { Difficulty, UserAnswer } from "../types/quiz";
 import { generateQuizFromBackend } from "../lib/quizApi";
 
 function useQuery() {
@@ -12,12 +12,13 @@ function useQuery() {
 export default function QuizPage() {
   const query = useQuery();
   const topic = query.get("topic") || "General Knowledge";
+  const difficulty = (query.get("difficulty") as Difficulty) || "medium";
   const navigate = useNavigate();
 
   const [answers, setAnswers] = useState<UserAnswer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [quiz, setQuiz] = useState(generateMockQuiz({ topic }));
+  const [quiz, setQuiz] = useState(generateMockQuiz({ topic, difficulty }));
 
   useEffect(() => {
     let cancelled = false;
@@ -25,7 +26,12 @@ export default function QuizPage() {
     setError(null);
     setAnswers([]);
 
-    generateQuizFromBackend({ topic, numQuestions: 5, optionsPerQuestion: 4 })
+    generateQuizFromBackend({
+      topic,
+      numQuestions: 5,
+      optionsPerQuestion: 4,
+      difficulty,
+    })
       .then((res) => {
         if (cancelled) return;
         setQuiz(res.quiz);
@@ -33,7 +39,7 @@ export default function QuizPage() {
       .catch(() => {
         if (cancelled) return;
         setError("Using local mock due to backend error");
-        setQuiz(generateMockQuiz({ topic }));
+        setQuiz(generateMockQuiz({ topic, difficulty }));
       })
       .finally(() => {
         if (cancelled) return;
@@ -43,7 +49,7 @@ export default function QuizPage() {
     return () => {
       cancelled = true;
     };
-  }, [topic]);
+  }, [topic, difficulty]);
 
   function selectAnswer(questionId: string, selectedIndex: number) {
     setAnswers((prev) => {
@@ -65,14 +71,18 @@ export default function QuizPage() {
   if (loading) {
     return (
       <div style={{ maxWidth: 720, margin: "2rem auto", padding: "0 1rem" }}>
-        <p>Generating quiz for topic: {topic}…</p>
+        <p>
+          Generating {difficulty} quiz for topic: {topic}…
+        </p>
       </div>
     );
   }
 
   return (
     <div style={{ maxWidth: 720, margin: "2rem auto", padding: "0 1rem" }}>
-      <h2>Topic: {quiz.topic}</h2>
+      <h2>
+        Topic: {quiz.topic} ({difficulty})
+      </h2>
       {error && (
         <div style={{ color: "#b45309", marginBottom: 8 }}>{error}</div>
       )}

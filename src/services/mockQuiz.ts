@@ -18,24 +18,25 @@ export function generateMockQuiz(params: GenerateQuizParams): Quiz {
   const topic = params.topic.trim() || "General Knowledge";
   const numQuestions = params.numQuestions ?? 5;
   const optionsPerQuestion = params.optionsPerQuestion ?? 4;
-  const rand = seededRandom(topic.toLowerCase());
+  const difficulty = params.difficulty ?? "medium";
+  const rand = seededRandom(`${topic.toLowerCase()}-${difficulty}`);
 
   const questions: QuizQuestion[] = Array.from({ length: numQuestions }).map(
     (_, idx) => {
       const correctIndex = Math.floor(rand() * optionsPerQuestion);
       const options = Array.from({ length: optionsPerQuestion }).map((__, i) =>
         i === correctIndex
-          ? `${topic} fact ${idx + 1}`
+          ? `${topic} ${difficulty} fact ${idx + 1}`
           : `${topic} distractor ${idx + 1}.${i + 1}`
       );
       return {
         id: `q${idx + 1}`,
-        prompt: `Question ${
+        prompt: `(${difficulty}) Question ${
           idx + 1
         }: Which statement best relates to ${topic}?`,
         options,
         correctIndex,
-        explanation: `The correct option mentions a core ${topic} idea.`,
+        explanation: `The correct option mentions a core ${topic} idea (difficulty: ${difficulty}).`,
       };
     }
   );
