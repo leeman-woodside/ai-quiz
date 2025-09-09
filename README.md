@@ -1,69 +1,95 @@
-# React + TypeScript + Vite
+## AI-Powered Knowledge Quiz – Local Setup
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This guide walks you through running the app locally: a Python FastAPI backend (LLM quiz generation) and a React + TypeScript + Vite frontend.
 
-Currently, two official plugins are available:
+### Prerequisites
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Node.js 22.12+ (Vite requires ≥ 20.19; recommended 22.12+)
+- pnpm (via Corepack):
+  - Enable: `corepack enable`
+  - Activate latest pnpm: `corepack prepare pnpm@latest --activate`
+- Python 3.11+
 
-## Expanding the ESLint configuration
+### 1) Start the backend (FastAPI)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+The backend lives in a sibling folder: `../ai-quiz-backend`.
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Create and activate a virtualenv, then install deps:
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd "../ai-quiz-backend"
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- Create `.env` (pick ONE of the two options below):
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+  - Use Groq (free key):
+    ```bash
+    # get a key at https://console.groq.com/keys
+    cat > .env <<'EOF'
+    PROVIDER=groq
+    GROQ_API_KEY=YOUR_GROQ_KEY
+    USE_MOCK=false
+    REQUEST_TIMEOUT_SECONDS=30
+    EOF
+    ```
+  - Or run in mock mode (no key required):
+    ```bash
+    cat > .env <<'EOF'
+    PROVIDER=groq
+    USE_MOCK=true
+    REQUEST_TIMEOUT_SECONDS=30
+    EOF
+    ```
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Run the server:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
+
+The backend will be available at `http://localhost:8000`.
+
+### 2) Start the frontend (Vite + React + TS)
+
+This folder: `ai-quiz`.
+
+- Install deps and set the backend URL:
+
+```bash
+pnpm install
+# point frontend at the backend
+printf "VITE_API_BASE_URL=http://localhost:8000\n" > .env.local
+```
+
+- Run the dev server:
+
+```bash
+pnpm dev
+```
+
+Open `http://localhost:5173`.
+
+### 3) Use the app
+
+- Enter a topic on the home page (e.g., "Neural Networks").
+- The app generates a 5-question multiple-choice quiz.
+- Answer and submit to see the score and correct answers.
+
+### Troubleshooting
+
+- Vite error about Node version:
+  - Update Node to 22.12+: `asdf install nodejs 22.12.0 && asdf local nodejs 22.12.0`
+- pnpm not found:
+  - `corepack enable && corepack prepare pnpm@latest --activate`
+- `uvicorn` not found:
+  - Ensure venv active: `source ../ai-quiz-backend/.venv/bin/activate`
+  - Or run directly: `../ai-quiz-backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000`
+- CORS:
+  - Backend allows `http://localhost:5173` by default.
+
+### Optional: Switch providers
+
+Backend supports `PROVIDER=groq | openrouter | openai`. For OpenRouter/OpenAI, add the respective API key to `.env` and set `USE_MOCK=false`.
